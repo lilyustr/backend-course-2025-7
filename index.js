@@ -4,6 +4,8 @@ import swaggerUi from "swagger-ui-express";
 import express from "express";
 import multer from "multer";
 import { Command } from "commander";
+import dotenv from "dotenv";
+dotenv.config();
 import path from "path";
 import fs from "fs";
 import { fileURLToPath } from "url";
@@ -11,17 +13,17 @@ import { fileURLToPath } from "url";
 const program = new Command();
 
 program
-  .requiredOption("-h, --host <host>", "server host")
-  .requiredOption("-p, --port <port>", "server port")
-  .requiredOption("-c, --cache <path>", "cache directory");
+  .option("-h, --host <host>", "server host", process.env.HOST || "0.0.0.0")
+  .option("-p, --port <port>", "server port", process.env.PORT || 3000)
+  .option("-c, --cache <path>", "cache directory", process.env.CACHE || "./cache");
 
 program.parse(process.argv);
 const options = program.opts();
 
 const app = express();
-const HOST = options.host;
-const PORT = options.port;
-const CACHE = options.cache;
+const HOST = process.env.HOST;
+const PORT = process.env.PORT;
+const CACHE = process.env.CACHE;
 
 // --- __dirname для ESM ---
 const __filename = fileURLToPath(import.meta.url);
@@ -389,6 +391,6 @@ app.use((req, res) => {
   res.status(405).send("Method not allowed");
 });
 
-app.listen(PORT, HOST, () => {
-  console.log(`Server running at http://${HOST}:${PORT}/`);
+app.listen(PORT, "0.0.0.0", () => {
+  console.log(`Server running at http://localhost:${PORT}/`);
 });

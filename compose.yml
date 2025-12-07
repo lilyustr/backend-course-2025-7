@@ -1,37 +1,37 @@
 version: "3.9"
-
 services:
-  server:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: inventory-server
-    restart: unless-stopped
-    env_file:
-      - ./.env
-    ports:
-      - "${NODE_DOCKER_PORT}:${NODE_DOCKER_PORT}"
-    volumes:
-      - .:/app
-      - /app/node_modules
-    depends_on:
-      - db
-
   db:
     image: postgres:16
     container_name: inventory-db
-    restart: always
-    env_file:
-      - ./.env
-    ports:
-      - "${DB_PORT}:${DB_PORT}"
     environment:
-      - POSTGRES_USER=${DB_USER}
-      - POSTGRES_PASSWORD=${DB_PASSWORD}
-      - POSTGRES_DB=${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    ports:
+      - "${DB_PORT}:5432"
     volumes:
-      - pgdata:/var/lib/postgresql/data
-      - ./initdb:/docker-entrypoint-initdb.d
+      - db_data:/var/lib/postgresql/data
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
+
+  server:
+    build: .
+    container_name: inventory-server
+    command: npx nodemon index.js
+    ports:
+      - "${NODE_DOCKER_PORT}:3000"
+    environment:
+      HOST: ${HOST}
+      PORT: ${PORT}
+      CACHE: ${CACHE}
+      DB_PORT: ${DB_PORT}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_NAME}
+    depends_on:
+      - db
+    volumes:
+      - .:/app
+      - ./cache:/app/cache
 
 volumes:
-  pgdata:
+  db_data:
